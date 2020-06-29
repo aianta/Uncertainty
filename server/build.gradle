@@ -1,0 +1,17 @@
+apply plugin: 'application'
+
+sourceCompatibility = 14.0
+mainClassName = 'com.uncertainty.server.ServerLauncher'
+eclipse.project.name = appName + '-server'
+
+dependencies {
+	implementation project(':shared')
+}
+
+jar {
+	archiveFileName = "${appName}-server-${archiveVersion}.jar"
+	from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } } 
+	manifest {
+		attributes 'Main-Class': project.mainClassName
+	}
+}
