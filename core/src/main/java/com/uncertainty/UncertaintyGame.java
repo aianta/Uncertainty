@@ -30,8 +30,10 @@ import java.util.stream.Stream;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class UncertaintyGame extends ApplicationAdapter {
 
-    public static final int MAP_HEIGHT = 25;
-    public static final int MAP_WIDTH = 25;
+    public static final int MAP_HEIGHT = 27;
+    public static final int MAP_WIDTH = 27;
+    public static final int CHUNK_HEIGHT = MAP_HEIGHT/3;
+    public static final int CHUNK_WIDTH = MAP_WIDTH/3;
 
     public static final int MAX_DEPTH = 10;
     public static final int MIN_DEPTH = 0;
@@ -51,7 +53,7 @@ public class UncertaintyGame extends ApplicationAdapter {
     private BitmapFont font;
     private SpriteBatch batch;
 
-    private Chunk chunk;
+    private Chunk [][] world;
     public static int currentDepth = 0;
 
     public void create(){
@@ -72,7 +74,12 @@ public class UncertaintyGame extends ApplicationAdapter {
         shapeRenderer = new ShapeRenderer();
 
         //Create world
-        chunk = new Chunk(MAP_WIDTH, MAP_HEIGHT, MAX_DEPTH);
+        world = new Chunk[MAP_HEIGHT/CHUNK_HEIGHT][MAP_WIDTH/CHUNK_WIDTH];
+        for(int i = 0; i < MAP_HEIGHT/CHUNK_HEIGHT; i++){
+            for(int j = 0; j < MAP_WIDTH/CHUNK_WIDTH; j++){
+                world[j][i] = new Chunk(CHUNK_WIDTH,CHUNK_HEIGHT, MAX_DEPTH);
+            }
+        }
 
         //Initalize entity system
         engine = new Engine();
@@ -124,14 +131,13 @@ public class UncertaintyGame extends ApplicationAdapter {
 
         //Render
         shapeRenderer.setProjectionMatrix(camera.combined);
-
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
         //Depth based render
         int counter = 0;
         for(int i = 0; i <= currentDepth; i++){
 
-            BlockType[][] levelMap = chunk.getLayer(i);
+            BlockType[][] levelMap = getLayer(i);
             var levelMatrix = matrix.cpy();
             levelMatrix.translate(-i,-i,-i);
             shapeRenderer.setTransformMatrix(levelMatrix);
@@ -171,9 +177,53 @@ public class UncertaintyGame extends ApplicationAdapter {
             counter++;
 
         }
+        shapeRenderer.end();
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        //Depth based render
+        counter = 0;
+        for(int i = 0; i <= currentDepth; i++){
+
+            BlockType[][] levelMap = getLayer(i);
+            var levelMatrix = matrix.cpy();
+            levelMatrix.translate(-i,-i,-i);
+            shapeRenderer.setTransformMatrix(levelMatrix);
+
+            for(int z = 0; z < MAP_HEIGHT; z++){
+                for(int x = 0; x < MAP_WIDTH; x++){
+
+                    BlockType block = levelMap[z][x];
+                    float light = 0.25f + i*0.1f;
+
+                    switch (block){
+                        case DIRT:
+                            shapeRenderer.setColor(Color.BLACK.cpy().mul(light));
+                            shapeRenderer.rect(x,z, 1,1);
+                            break;
+                        case EMPTY:
+                            continue;
+                        case GRASS:
+                            shapeRenderer.setColor(Color.BLACK.cpy().mul(light));
+                            shapeRenderer.rect(x,z,1,1);
+                    }
+                }
+            }
 
 
+            if(counter == currentDepth){
+                //Draw player
+                shapeRenderer.setTransformMatrix(levelMatrix);
+                shapeRenderer.setColor(Color.FIREBRICK);
+                shapeRenderer.rect(
+                        position.get(player).x,
+                        position.get(player).y,
+                        size.get(player).width,
+                        size.get(player).height
+                );
+            }
+            counter++;
 
+        }
 
         shapeRenderer.end();
 
@@ -185,32 +235,28 @@ public class UncertaintyGame extends ApplicationAdapter {
         batch.end();
     }
 
-    public int [][] generateMap(int width, int height, double noiseChance){
-        int [][] map = new int[height][width];
-        for(int y = 0; y < height; y++){
-            //If this is the first or last row of the map
-            if(y == 0 || y == height - 1){
-                //Make every tile a wall
-                for(int x = 0; x < width; x++){
-                    map[y][x] = 1;
+    public BlockType [][] getLayer(int depth){
+        BlockType [][] layer = new BlockType[MAP_HEIGHT][MAP_WIDTH];
+
+        // Iterate through the world chunks
+        for(int i = 0; i < MAP_HEIGHT/CHUNK_HEIGHT; i++){
+            for(int j = 0; j < MAP_WIDTH/CHUNK_WIDTH; j++){
+                Chunk chunk = world[i][j];
+                BlockType [][] chunkLayer = world[i][j].getLayer(depth);
+
+                //Iterate through the individual chunk
+                for(int chunkI = 0; chunkI < chunk.height; chunkI++){
+                    for(int chunkJ = 0; chunkJ < chunk.width; chunkJ++){
+
+                        // Convert local chunk co-ordonates to world co-ordonates
+                        layer[i*CHUNK_HEIGHT + chunkI][j*CHUNK_WIDTH + chunkJ] = chunkLayer[chunkI][chunkJ];
+                    }
                 }
-            }else{
-                //Otherwise, have walls only on the edges
-                map[y][0] = 1;
-                map[y][width - 1] = 1;
-
-
-                    for(var x = 0; x < MAP_WIDTH; x++){
-                        if(Math.random() > noiseChance){
-                            map[y][x] = 1;
-                        }
-
-                }
-
-
             }
         }
-        return map;
+
+        return layer;
+
     }
 
 }

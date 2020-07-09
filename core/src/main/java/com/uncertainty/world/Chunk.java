@@ -7,12 +7,12 @@ import java.util.Random;
 public class Chunk {
 
     public static final Random RANDOM = new Random();
-    private double undergroundChance = 0.8;
+    private double undergroundChance = 1.0;
     private double abovegroundChance = 0.0;
 
-    int width;
-    int height;
-    int depth;
+    public int width;
+    public int height;
+    public int depth;
 
     List<BlockType [][]> chunk;
     int groundLevel;
@@ -67,4 +67,6 @@ public class Chunk {
     public BlockType [][] getLayer(int depth){
         return chunk.get(depth);
     }
+
+
 }
