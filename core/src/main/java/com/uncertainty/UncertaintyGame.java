@@ -21,6 +21,10 @@ import com.uncertainty.components.SizeComponent;
 import com.uncertainty.components.VelocityComponent;
 import com.uncertainty.entities.systems.MovementSystem;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class UncertaintyGame extends ApplicationAdapter {
 
@@ -38,9 +42,12 @@ public class UncertaintyGame extends ApplicationAdapter {
     private ComponentMapper<SizeComponent> size = ComponentMapper.getFor(SizeComponent.class);
 
     private Matrix4 matrix = new Matrix4();
-    private int [][] map;
+
     private BitmapFont font;
     private SpriteBatch batch;
+
+    public static List<int [][]> levels = new ArrayList<>();
+    public static int currentDepth = 0;
 
     public void create(){
 
@@ -48,16 +55,23 @@ public class UncertaintyGame extends ApplicationAdapter {
         camera = new OrthographicCamera(MAP_WIDTH/2,(MAP_HEIGHT/2) * (Gdx.graphics.getHeight()/(float)Gdx.graphics.getWidth()));
         camera.position.set(MAP_WIDTH/2,MAP_HEIGHT/2,MAP_HEIGHT/2);
         camera.direction.set(-1,-1,-1);
-        camera.near = 1;
+        camera.near = -200;
         camera.far = 200;
+        camera.viewportHeight = 34;
+        camera.viewportWidth = 37;
         matrix.setToRotation(new Vector3(1,0,0), 90);
+
 
         batch = new SpriteBatch();
         font = new BitmapFont();
         shapeRenderer = new ShapeRenderer();
 
-        //Generate the map
-        map = generateMap(MAP_WIDTH,MAP_HEIGHT);
+        //Generate the map levels
+        Stream.generate(()->generateMap(MAP_WIDTH,MAP_HEIGHT,Math.random()))
+                .limit(10)
+                .forEach(
+                        level->levels.add(level)
+                );
 
         //Initalize entity system
         engine = new Engine();
@@ -94,7 +108,8 @@ public class UncertaintyGame extends ApplicationAdapter {
 
     public void render(){
         Gdx.gl.glClearColor(0,0,0.2f, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         camera.update();
 
         //Update entities
@@ -108,37 +123,64 @@ public class UncertaintyGame extends ApplicationAdapter {
 
         //Render
         shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.setTransformMatrix(matrix);
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        for(int z = 0; z < MAP_HEIGHT; z++){
-            for(int x = 0; x < MAP_WIDTH; x++){
-                if(map[z][x] == 1){
-                    shapeRenderer.setColor(Color.GRAY);
-                }else{
-                    shapeRenderer.setColor(Color.FOREST);
+
+        //Depth based render
+        int counter = 0;
+        for(int i = 0; i <= currentDepth; i++){
+
+            int [][] levelMap = levels.get(i);
+            var levelMatrix = matrix.cpy();
+            levelMatrix.translate(-i,-i,-i);
+            shapeRenderer.setTransformMatrix(levelMatrix);
+
+            for(int z = 0; z < MAP_HEIGHT; z++){
+                for(int x = 0; x < MAP_WIDTH; x++){
+                    if(levelMap[z][x] == 1){
+
+                        shapeRenderer.setColor(Color.GRAY.cpy().mul(i*0.1f));
+                        shapeRenderer.rect(x,z, 1,1);
+                    }else{
+                        shapeRenderer.setColor(Color.FOREST.cpy().mul(i*0.1f));
+                        if(i == currentDepth){
+                            shapeRenderer.rect(x,z, 1,1);
+                        }
+                    }
+
                 }
-                shapeRenderer.rect(x,z, 1,1);
             }
+
+
+            if(counter == currentDepth){
+                //Draw player
+                shapeRenderer.setTransformMatrix(levelMatrix);
+                shapeRenderer.setColor(Color.FIREBRICK);
+                shapeRenderer.rect(
+                        position.get(player).x,
+                        position.get(player).y,
+                        size.get(player).width,
+                        size.get(player).height
+                );
+            }
+            counter++;
+
         }
 
-        shapeRenderer.setColor(Color.FIREBRICK);
-        shapeRenderer.rect(
-                position.get(player).x,
-                position.get(player).y,
-                size.get(player).width,
-                size.get(player).height
-        );
+
+
 
         shapeRenderer.end();
 
         //Render FPS
         batch.begin();
         font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10,20);
+        font.draw(batch, "Depth: " + UncertaintyGame.currentDepth, 10, 40);
+        font.draw(batch, "Viewport (height: " + camera.viewportHeight + ", width: " + camera.viewportWidth + ")", 10, 60);
         batch.end();
     }
 
-    public int [][] generateMap(int width, int height){
+    public int [][] generateMap(int width, int height, double noiseChance){
         int [][] map = new int[height][width];
         for(int y = 0; y < height; y++){
             //If this is the first or last row of the map
@@ -151,6 +193,16 @@ public class UncertaintyGame extends ApplicationAdapter {
                 //Otherwise, have walls only on the edges
                 map[y][0] = 1;
                 map[y][width - 1] = 1;
+
+
+                    for(var x = 0; x < MAP_WIDTH; x++){
+                        if(Math.random() > noiseChance){
+                            map[y][x] = 1;
+                        }
+
+                }
+
+
             }
         }
         return map;

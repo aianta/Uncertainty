@@ -41,8 +41,22 @@ public class CameraController extends InputAdapter {
 
     @Override
     public boolean scrolled(int amount) {
-        camera.viewportHeight += amount;
-        camera.viewportWidth += amount;
+
+        int newDepth = UncertaintyGame.currentDepth + amount;
+
+        if(newDepth > UncertaintyGame.levels.size()-1){
+            UncertaintyGame.currentDepth = UncertaintyGame.levels.size()-1;
+            return false;
+        }
+
+        if(newDepth < 0){
+            UncertaintyGame.currentDepth = 0;
+            return false;
+        }
+
+        UncertaintyGame.currentDepth = newDepth;
+
         return false;
+
     }
 }
