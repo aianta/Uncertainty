@@ -20,6 +20,8 @@ import com.uncertainty.components.PositionComponent;
 import com.uncertainty.components.SizeComponent;
 import com.uncertainty.components.VelocityComponent;
 import com.uncertainty.entities.systems.MovementSystem;
+import com.uncertainty.world.BlockType;
+import com.uncertainty.world.Chunk;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,9 @@ public class UncertaintyGame extends ApplicationAdapter {
 
     public static final int MAP_HEIGHT = 25;
     public static final int MAP_WIDTH = 25;
+
+    public static final int MAX_DEPTH = 10;
+    public static final int MIN_DEPTH = 0;
 
     private OrthographicCamera camera;
     private ShapeRenderer shapeRenderer;
@@ -46,7 +51,7 @@ public class UncertaintyGame extends ApplicationAdapter {
     private BitmapFont font;
     private SpriteBatch batch;
 
-    public static List<int [][]> levels = new ArrayList<>();
+    private Chunk chunk;
     public static int currentDepth = 0;
 
     public void create(){
@@ -66,12 +71,8 @@ public class UncertaintyGame extends ApplicationAdapter {
         font = new BitmapFont();
         shapeRenderer = new ShapeRenderer();
 
-        //Generate the map levels
-        Stream.generate(()->generateMap(MAP_WIDTH,MAP_HEIGHT,Math.random()))
-                .limit(10)
-                .forEach(
-                        level->levels.add(level)
-                );
+        //Create world
+        chunk = new Chunk(MAP_WIDTH, MAP_HEIGHT, MAX_DEPTH);
 
         //Initalize entity system
         engine = new Engine();
@@ -130,24 +131,28 @@ public class UncertaintyGame extends ApplicationAdapter {
         int counter = 0;
         for(int i = 0; i <= currentDepth; i++){
 
-            int [][] levelMap = levels.get(i);
+            BlockType[][] levelMap = chunk.getLayer(i);
             var levelMatrix = matrix.cpy();
             levelMatrix.translate(-i,-i,-i);
             shapeRenderer.setTransformMatrix(levelMatrix);
 
             for(int z = 0; z < MAP_HEIGHT; z++){
                 for(int x = 0; x < MAP_WIDTH; x++){
-                    if(levelMap[z][x] == 1){
 
-                        shapeRenderer.setColor(Color.GRAY.cpy().mul(i*0.1f));
-                        shapeRenderer.rect(x,z, 1,1);
-                    }else{
-                        shapeRenderer.setColor(Color.FOREST.cpy().mul(i*0.1f));
-                        if(i == currentDepth){
+                    BlockType block = levelMap[z][x];
+                    float light = 0.25f + i*0.1f;
+
+                    switch (block){
+                        case DIRT:
+                            shapeRenderer.setColor(Color.BROWN.cpy().mul(light));
                             shapeRenderer.rect(x,z, 1,1);
-                        }
+                            break;
+                        case EMPTY:
+                            continue;
+                        case GRASS:
+                            shapeRenderer.setColor(Color.FOREST.cpy().mul(light));
+                            shapeRenderer.rect(x,z,1,1);
                     }
-
                 }
             }
 

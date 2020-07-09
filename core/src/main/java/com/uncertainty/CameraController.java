@@ -7,6 +7,9 @@ import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.Ray;
 
+import static com.uncertainty.UncertaintyGame.MAX_DEPTH;
+import static com.uncertainty.UncertaintyGame.MIN_DEPTH;
+
 public class CameraController extends InputAdapter {
 
     final Plane xzPlane = new Plane(new Vector3(0,1,0),0);
@@ -44,18 +47,17 @@ public class CameraController extends InputAdapter {
 
         int newDepth = UncertaintyGame.currentDepth + amount;
 
-        if(newDepth > UncertaintyGame.levels.size()-1){
-            UncertaintyGame.currentDepth = UncertaintyGame.levels.size()-1;
+        if(newDepth > MAX_DEPTH-1){
+            UncertaintyGame.currentDepth = MAX_DEPTH-1;
             return false;
         }
 
-        if(newDepth < 0){
-            UncertaintyGame.currentDepth = 0;
+        if(newDepth < MIN_DEPTH){
+            UncertaintyGame.currentDepth = MIN_DEPTH;
             return false;
         }
 
         UncertaintyGame.currentDepth = newDepth;
-
         return false;
 
     }
