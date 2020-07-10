@@ -3,6 +3,8 @@ package com.uncertainty.world;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Chunk {
 
@@ -75,14 +77,20 @@ public class Chunk {
      * @return
      */
     public Chunk rotate(){
-        for(BlockType[][] level: chunk){
+        Chunk rotatedChunk = new Chunk(width,height,depth);
+        rotatedChunk.chunk = Stream.generate(()->new BlockType[height][width])
+                .limit(depth)
+                .collect(Collectors.toList());
+
+        for(int z = 0; z < chunk.size(); z++){
+            BlockType[][] level = rotatedChunk.chunk.get(z);
             for(int y = 0; y < level.length; y++){
                 for(int x = 0; x < level[y].length; x++){
-                    level[y][x] = level[level[y].length - x - 1][y];
+                    level[y][x] = chunk.get(z)[level[y].length - x - 1][y];
                 }
             }
         }
-        return this;
+        return rotatedChunk;
     }
 
 }

@@ -132,7 +132,7 @@ public class UncertaintyGame extends ApplicationAdapter {
         if(Gdx.input.isKeyJustPressed(Input.Keys.R)) world = generateWorld(); //Generate a new world
         if(Gdx.input.isKeyJustPressed(Input.Keys.PERIOD)) {
 
-            rotate();
+            world = rotate();
 
         }
 
@@ -282,13 +282,15 @@ public class UncertaintyGame extends ApplicationAdapter {
         return world;
     }
 
-    public void rotate(){
+    public Chunk [][] rotate(){
+        Chunk[][] rotatedWorld = new Chunk[MAP_HEIGHT/CHUNK_HEIGHT][MAP_WIDTH/CHUNK_WIDTH];
         for(int y = 0; y < world.length; y++){
             for(int x = 0; x < world[y].length; x++){
-                world[y][x].rotate(); //Rotate chunk
-                world[y][x] = world[world[y].length - x - 1][y]; //Rotate world
+                rotatedWorld[y][x] = world[world[y].length - x - 1][y].rotate(); //Rotate world
             }
         }
+
+        return rotatedWorld;
 
     }
 }
