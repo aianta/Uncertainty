@@ -3,10 +3,7 @@ package com.uncertainty;
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.gdx.Application;
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -14,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.uncertainty.components.PositionComponent;
@@ -35,7 +33,7 @@ public class UncertaintyGame extends ApplicationAdapter {
     public static final int CHUNK_HEIGHT = MAP_HEIGHT/3;
     public static final int CHUNK_WIDTH = MAP_WIDTH/3;
 
-    public static final int MAX_DEPTH = 10;
+    public static final int MAX_DEPTH = 20;
     public static final int MIN_DEPTH = 0;
 
     private OrthographicCamera camera;
@@ -55,6 +53,12 @@ public class UncertaintyGame extends ApplicationAdapter {
 
     private Chunk [][] world;
     public static int currentDepth = 0;
+    public static boolean showGrid = true;
+    float axisX = -1f;
+    float axisY = -1f;
+    float axisZ = -1f;
+
+    public int currAngle = 0;
 
     public void create(){
 
@@ -74,12 +78,7 @@ public class UncertaintyGame extends ApplicationAdapter {
         shapeRenderer = new ShapeRenderer();
 
         //Create world
-        world = new Chunk[MAP_HEIGHT/CHUNK_HEIGHT][MAP_WIDTH/CHUNK_WIDTH];
-        for(int i = 0; i < MAP_HEIGHT/CHUNK_HEIGHT; i++){
-            for(int j = 0; j < MAP_WIDTH/CHUNK_WIDTH; j++){
-                world[j][i] = new Chunk(CHUNK_WIDTH,CHUNK_HEIGHT, MAX_DEPTH);
-            }
-        }
+        world = generateWorld();
 
         //Initalize entity system
         engine = new Engine();
@@ -118,6 +117,7 @@ public class UncertaintyGame extends ApplicationAdapter {
         Gdx.gl.glClearColor(0,0,0.2f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        //camera.position.set(cameraAngles[currAngle]);
         camera.update();
 
         //Update entities
@@ -128,18 +128,26 @@ public class UncertaintyGame extends ApplicationAdapter {
         if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)) velocity.get(player).x += MovementSystem.MAX_VELOCITY/8;
         if(Gdx.input.isKeyPressed(Input.Keys.UP)) velocity.get(player).y -= MovementSystem.MAX_VELOCITY/8;
         if(Gdx.input.isKeyPressed(Input.Keys.DOWN)) velocity.get(player).y += MovementSystem.MAX_VELOCITY/8;
+        if(Gdx.input.isKeyJustPressed(Input.Keys.G)) showGrid = !showGrid; //Toggle grid
+        if(Gdx.input.isKeyJustPressed(Input.Keys.R)) world = generateWorld(); //Generate a new world
+        if(Gdx.input.isKeyJustPressed(Input.Keys.PERIOD)) {
+
+            rotate();
+
+        }
+
 
         //Render
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        //Depth based render
+        //Depth based render of world
         int counter = 0;
         for(int i = 0; i <= currentDepth; i++){
 
             BlockType[][] levelMap = getLayer(i);
             var levelMatrix = matrix.cpy();
-            levelMatrix.translate(-i,-i,-i);
+            levelMatrix.translate(-i*0.5f,-i*0.5f,-i*0.5f);
             shapeRenderer.setTransformMatrix(levelMatrix);
 
             for(int z = 0; z < MAP_HEIGHT; z++){
@@ -179,59 +187,64 @@ public class UncertaintyGame extends ApplicationAdapter {
         }
         shapeRenderer.end();
 
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        //Depth based render
-        counter = 0;
-        for(int i = 0; i <= currentDepth; i++){
+        //Depth based render of grid
+        if(showGrid){
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            //Depth based render
+            counter = 0;
+            for(int i = 0; i <= currentDepth; i++){
 
-            BlockType[][] levelMap = getLayer(i);
-            var levelMatrix = matrix.cpy();
-            levelMatrix.translate(-i,-i,-i);
-            shapeRenderer.setTransformMatrix(levelMatrix);
+                BlockType[][] levelMap = getLayer(i);
+                var levelMatrix = matrix.cpy();
+                levelMatrix.translate(-i*0.5f,-i*0.5f,-i*0.5f);
+                shapeRenderer.setTransformMatrix(levelMatrix);
 
-            for(int z = 0; z < MAP_HEIGHT; z++){
-                for(int x = 0; x < MAP_WIDTH; x++){
+                for(int z = 0; z < MAP_HEIGHT; z++){
+                    for(int x = 0; x < MAP_WIDTH; x++){
 
-                    BlockType block = levelMap[z][x];
-                    float light = 0.25f + i*0.1f;
+                        BlockType block = levelMap[z][x];
+                        float light = 0.25f + i*0.1f;
 
-                    switch (block){
-                        case DIRT:
-                            shapeRenderer.setColor(Color.BLACK.cpy().mul(light));
-                            shapeRenderer.rect(x,z, 1,1);
-                            break;
-                        case EMPTY:
-                            continue;
-                        case GRASS:
-                            shapeRenderer.setColor(Color.BLACK.cpy().mul(light));
-                            shapeRenderer.rect(x,z,1,1);
+                        switch (block){
+                            case DIRT:
+                                shapeRenderer.setColor(Color.BLACK.cpy().mul(light));
+                                shapeRenderer.rect(x,z, 1,1);
+                                break;
+                            case EMPTY:
+                                continue;
+                            case GRASS:
+                                shapeRenderer.setColor(Color.BLACK.cpy().mul(light));
+                                shapeRenderer.rect(x,z,1,1);
+                        }
                     }
                 }
+
+
+                if(counter == currentDepth){
+                    //Draw player
+                    shapeRenderer.setTransformMatrix(levelMatrix);
+                    shapeRenderer.setColor(Color.FIREBRICK);
+                    shapeRenderer.rect(
+                            position.get(player).x,
+                            position.get(player).y,
+                            size.get(player).width,
+                            size.get(player).height
+                    );
+                }
+                counter++;
+
             }
 
-
-            if(counter == currentDepth){
-                //Draw player
-                shapeRenderer.setTransformMatrix(levelMatrix);
-                shapeRenderer.setColor(Color.FIREBRICK);
-                shapeRenderer.rect(
-                        position.get(player).x,
-                        position.get(player).y,
-                        size.get(player).width,
-                        size.get(player).height
-                );
-            }
-            counter++;
-
+            shapeRenderer.end();
         }
 
-        shapeRenderer.end();
 
         //Render FPS
         batch.begin();
         font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10,20);
         font.draw(batch, "Depth: " + UncertaintyGame.currentDepth, 10, 40);
         font.draw(batch, "Viewport (height: " + camera.viewportHeight + ", width: " + camera.viewportWidth + ")", 10, 60);
+        font.draw(batch, "Camera Position (x: "+camera.position.x+" y: "+ camera.position.y+" z: "+camera.position.z+")", 10, 80);
         batch.end();
     }
 
@@ -259,4 +272,23 @@ public class UncertaintyGame extends ApplicationAdapter {
 
     }
 
+    public Chunk[][] generateWorld(){
+        Chunk[][] world =  new Chunk[MAP_HEIGHT/CHUNK_HEIGHT][MAP_WIDTH/CHUNK_WIDTH];
+        for(int i = 0; i < MAP_HEIGHT/CHUNK_HEIGHT; i++){
+            for(int j = 0; j < MAP_WIDTH/CHUNK_WIDTH; j++){
+                world[j][i] = new Chunk(CHUNK_WIDTH,CHUNK_HEIGHT, MAX_DEPTH);
+            }
+        }
+        return world;
+    }
+
+    public void rotate(){
+        for(int y = 0; y < world.length; y++){
+            for(int x = 0; x < world[y].length; x++){
+                world[y][x].rotate(); //Rotate chunk
+                world[y][x] = world[world[y].length - x - 1][y]; //Rotate world
+            }
+        }
+
+    }
 }

@@ -68,5 +68,21 @@ public class Chunk {
         return chunk.get(depth);
     }
 
+    /** Rotates all levels of a chunk by 90 degrees. Using rotation matrix
+     *  [0 , -1]
+     *  [1, 0]
+     *
+     * @return
+     */
+    public Chunk rotate(){
+        for(BlockType[][] level: chunk){
+            for(int y = 0; y < level.length; y++){
+                for(int x = 0; x < level[y].length; x++){
+                    level[y][x] = level[level[y].length - x - 1][y];
+                }
+            }
+        }
+        return this;
+    }
 
 }
