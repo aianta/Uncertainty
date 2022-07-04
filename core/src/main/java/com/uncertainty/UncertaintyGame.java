@@ -7,9 +7,14 @@ import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.IsometricStaggeredTiledMapRenderer;
+import com.badlogic.gdx.maps.tiled.renderers.IsometricTiledMapRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Rectangle;
@@ -60,18 +65,21 @@ public class UncertaintyGame extends ApplicationAdapter {
 
     public int currAngle = 0;
 
+    Texture img;
+    TiledMap tiledMap;
+    IsometricTiledMapRenderer tiledMapRenderer;
+
     public void create(){
 
         //Setup isometric view
-        camera = new OrthographicCamera(MAP_WIDTH/2,(MAP_HEIGHT/2) * (Gdx.graphics.getHeight()/(float)Gdx.graphics.getWidth()));
-        camera.position.set(MAP_WIDTH/2,MAP_HEIGHT/2,MAP_HEIGHT/2);
-        camera.direction.set(-1,-1,-1);
-        camera.near = -200;
-        camera.far = 200;
-        camera.viewportHeight = 34;
-        camera.viewportWidth = 37;
+        camera = new OrthographicCamera();
+        camera.setToOrtho(false, 250,250);
         matrix.setToRotation(new Vector3(1,0,0), 90);
 
+
+
+        tiledMap = new TmxMapLoader().load("testMap.tmx");
+        tiledMapRenderer = new IsometricTiledMapRenderer(tiledMap);
 
         batch = new SpriteBatch();
         font = new BitmapFont();
@@ -119,11 +127,18 @@ public class UncertaintyGame extends ApplicationAdapter {
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         //camera.position.set(cameraAngles[currAngle]);
         camera.update();
+        tiledMapRenderer.setView(camera);
+        tiledMapRenderer.render();
 
         //Update entities
         engine.update(Gdx.graphics.getDeltaTime());
 
         //Process Controls
+        if(Gdx.input.isKeyPressed(Input.Keys.W)) camera.translate(0,1,0);
+        if(Gdx.input.isKeyPressed(Input.Keys.A)) camera.translate(-1, 0,0);
+        if(Gdx.input.isKeyPressed(Input.Keys.S)) camera.translate(0,-1,0);
+        if(Gdx.input.isKeyPressed(Input.Keys.D)) camera.translate(1,0,0);
+        if(Gdx.input.isKeyPressed(Input.Keys.L))
         if(Gdx.input.isKeyPressed(Input.Keys.LEFT)) velocity.get(player).x -= MovementSystem.MAX_VELOCITY/8;
         if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)) velocity.get(player).x += MovementSystem.MAX_VELOCITY/8;
         if(Gdx.input.isKeyPressed(Input.Keys.UP)) velocity.get(player).y -= MovementSystem.MAX_VELOCITY/8;
@@ -131,111 +146,7 @@ public class UncertaintyGame extends ApplicationAdapter {
         if(Gdx.input.isKeyJustPressed(Input.Keys.G)) showGrid = !showGrid; //Toggle grid
         if(Gdx.input.isKeyJustPressed(Input.Keys.R)) world = generateWorld(); //Generate a new world
         if(Gdx.input.isKeyJustPressed(Input.Keys.PERIOD)) {
-
             world = rotate();
-
-        }
-
-
-        //Render
-        shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        //Depth based render of world
-        int counter = 0;
-        for(int i = 0; i <= currentDepth; i++){
-
-            BlockType[][] levelMap = getLayer(i);
-            var levelMatrix = matrix.cpy();
-            levelMatrix.translate(-i*0.5f,-i*0.5f,-i*0.5f);
-            shapeRenderer.setTransformMatrix(levelMatrix);
-
-            for(int z = 0; z < MAP_HEIGHT; z++){
-                for(int x = 0; x < MAP_WIDTH; x++){
-
-                    BlockType block = levelMap[z][x];
-                    float light = 0.25f + i*0.1f;
-
-                    switch (block){
-                        case DIRT:
-                            shapeRenderer.setColor(Color.BROWN.cpy().mul(light));
-                            shapeRenderer.rect(x,z, 1,1);
-                            break;
-                        case EMPTY:
-                            continue;
-                        case GRASS:
-                            shapeRenderer.setColor(Color.FOREST.cpy().mul(light));
-                            shapeRenderer.rect(x,z,1,1);
-                    }
-                }
-            }
-
-
-            if(counter == currentDepth){
-                //Draw player
-                shapeRenderer.setTransformMatrix(levelMatrix);
-                shapeRenderer.setColor(Color.FIREBRICK);
-                shapeRenderer.rect(
-                        position.get(player).x,
-                        position.get(player).y,
-                        size.get(player).width,
-                        size.get(player).height
-                );
-            }
-            counter++;
-
-        }
-        shapeRenderer.end();
-
-        //Depth based render of grid
-        if(showGrid){
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            //Depth based render
-            counter = 0;
-            for(int i = 0; i <= currentDepth; i++){
-
-                BlockType[][] levelMap = getLayer(i);
-                var levelMatrix = matrix.cpy();
-                levelMatrix.translate(-i*0.5f,-i*0.5f,-i*0.5f);
-                shapeRenderer.setTransformMatrix(levelMatrix);
-
-                for(int z = 0; z < MAP_HEIGHT; z++){
-                    for(int x = 0; x < MAP_WIDTH; x++){
-
-                        BlockType block = levelMap[z][x];
-                        float light = 0.25f + i*0.1f;
-
-                        switch (block){
-                            case DIRT:
-                                shapeRenderer.setColor(Color.BLACK.cpy().mul(light));
-                                shapeRenderer.rect(x,z, 1,1);
-                                break;
-                            case EMPTY:
-                                continue;
-                            case GRASS:
-                                shapeRenderer.setColor(Color.BLACK.cpy().mul(light));
-                                shapeRenderer.rect(x,z,1,1);
-                        }
-                    }
-                }
-
-
-                if(counter == currentDepth){
-                    //Draw player
-                    shapeRenderer.setTransformMatrix(levelMatrix);
-                    shapeRenderer.setColor(Color.FIREBRICK);
-                    shapeRenderer.rect(
-                            position.get(player).x,
-                            position.get(player).y,
-                            size.get(player).width,
-                            size.get(player).height
-                    );
-                }
-                counter++;
-
-            }
-
-            shapeRenderer.end();
         }
 
 

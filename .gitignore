@@ -68,3 +68,6 @@ nb-configuration.xml
 *~
 *.*#
 *#*#
+
+## Voronoi test imgs
+voronoi*.png
