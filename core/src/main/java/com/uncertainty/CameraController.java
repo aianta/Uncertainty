@@ -12,7 +12,7 @@ import static com.uncertainty.UncertaintyGame.MIN_DEPTH;
 
 public class CameraController extends InputAdapter {
 
-    final Plane xzPlane = new Plane(new Vector3(0,1,0),0);
+    final Plane xyPlane = new Plane(new Vector3(0,0,1),0);
     final Vector3 curr = new Vector3();
     final Vector3 last = new Vector3(-1,-1,-1);
     final Vector3 delta = new Vector3();
@@ -25,11 +25,13 @@ public class CameraController extends InputAdapter {
 
     public boolean touchDragged(int x, int y, int pointer){
         Ray pickRay = camera.getPickRay(x,y);
-        Intersector.intersectRayPlane(pickRay, xzPlane, curr);
+        Intersector.intersectRayPlane(pickRay, xyPlane, curr);
+        System.out.println("intersection: ");
+        System.out.println(curr);
 
         if(!(last.x == -1 && last.y == -1 && last.z == -1)){
             pickRay = camera.getPickRay(last.x, last.y);
-            Intersector.intersectRayPlane(pickRay,xzPlane, delta);
+            Intersector.intersectRayPlane(pickRay,xyPlane, delta);
             delta.sub(curr);
             camera.position.add(delta.x, delta.y, delta.z);
         }

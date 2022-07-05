@@ -19,9 +19,6 @@ public class VoronoiGenerator {
         return d;
     }
 
-    static double distance(VCell c1, VCell c2){
-        return distance(c1.x, c2.x, c1.y, c2.y);
-    }
 
 
 

@@ -4,7 +4,6 @@ import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.*;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -12,24 +11,15 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TmxMapLoader;
-import com.badlogic.gdx.maps.tiled.renderers.IsometricStaggeredTiledMapRenderer;
-import com.badlogic.gdx.maps.tiled.renderers.IsometricTiledMapRenderer;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector3;
 import com.uncertainty.components.PositionComponent;
 import com.uncertainty.components.SizeComponent;
 import com.uncertainty.components.VelocityComponent;
 import com.uncertainty.entities.systems.MovementSystem;
 import com.uncertainty.world.BlockType;
-import com.uncertainty.world.Chunk;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class UncertaintyGame extends ApplicationAdapter {
@@ -62,7 +52,6 @@ public class UncertaintyGame extends ApplicationAdapter {
     private SpriteBatch batch;
     private SpriteBatch textOverlay;
 
-    private Chunk [][] world;
     public static int currentDepth = 0;
     public static boolean showGrid = true;
     float axisX = -1f;
@@ -173,49 +162,6 @@ public class UncertaintyGame extends ApplicationAdapter {
         camera.update();
     }
 
-    public BlockType [][] getLayer(int depth){
-        BlockType [][] layer = new BlockType[MAP_HEIGHT][MAP_WIDTH];
 
-        // Iterate through the world chunks
-        for(int i = 0; i < MAP_HEIGHT/CHUNK_HEIGHT; i++){
-            for(int j = 0; j < MAP_WIDTH/CHUNK_WIDTH; j++){
-                Chunk chunk = world[i][j];
-                BlockType [][] chunkLayer = world[i][j].getLayer(depth);
 
-                //Iterate through the individual chunk
-                for(int chunkI = 0; chunkI < chunk.height; chunkI++){
-                    for(int chunkJ = 0; chunkJ < chunk.width; chunkJ++){
-
-                        // Convert local chunk co-ordonates to world co-ordonates
-                        layer[i*CHUNK_HEIGHT + chunkI][j*CHUNK_WIDTH + chunkJ] = chunkLayer[chunkI][chunkJ];
-                    }
-                }
-            }
-        }
-
-        return layer;
-
-    }
-
-    public Chunk[][] generateWorld(){
-        Chunk[][] world =  new Chunk[MAP_HEIGHT/CHUNK_HEIGHT][MAP_WIDTH/CHUNK_WIDTH];
-        for(int i = 0; i < MAP_HEIGHT/CHUNK_HEIGHT; i++){
-            for(int j = 0; j < MAP_WIDTH/CHUNK_WIDTH; j++){
-                world[j][i] = new Chunk(CHUNK_WIDTH,CHUNK_HEIGHT, MAX_DEPTH);
-            }
-        }
-        return world;
-    }
-
-    public Chunk [][] rotate(){
-        Chunk[][] rotatedWorld = new Chunk[MAP_HEIGHT/CHUNK_HEIGHT][MAP_WIDTH/CHUNK_WIDTH];
-        for(int y = 0; y < world.length; y++){
-            for(int x = 0; x < world[y].length; x++){
-                rotatedWorld[y][x] = world[world[y].length - x - 1][y].rotate(); //Rotate world
-            }
-        }
-
-        return rotatedWorld;
-
-    }
 }

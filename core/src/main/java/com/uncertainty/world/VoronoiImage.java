@@ -95,7 +95,6 @@ public class VoronoiImage extends JFrame {
         for (int i = 0 ; i < cells; i++){
             px[i] = rand.nextInt(size);
             py[i] = rand.nextInt(size);
-            VCell.allCells.add(new VCell(px[i],py[i]));
             color[i] = rand.nextInt(16777215);
         }
 
