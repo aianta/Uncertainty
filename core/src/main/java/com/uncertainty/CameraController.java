@@ -16,6 +16,9 @@ public class CameraController extends InputAdapter {
     final Vector3 curr = new Vector3();
     final Vector3 last = new Vector3(-1,-1,-1);
     final Vector3 delta = new Vector3();
+    Vector3 selected = new Vector3(-1, -1, -1);
+    Vector3 cursorIntersectionIso = new Vector3(-1,-1,-1);
+    Vector3 cursorIntersectionXY = new Vector3(-1,-1,-1);
 
     private Camera camera;
 
@@ -45,6 +48,36 @@ public class CameraController extends InputAdapter {
     }
 
     @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        Vector3 isoPoint = new Vector3();
+        Ray pickRay = camera.getPickRay(screenX, screenY);
+        Intersector.intersectRayPlane(pickRay,xyPlane, isoPoint);
+        this.cursorIntersectionIso = isoPoint;
+        this.cursorIntersectionXY = UncertaintyGame.isoToXY(isoPoint);
+
+        return false;
+    }
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+
+//        Vector3 isoPoint = new Vector3();
+//        Ray pickRay = camera.getPickRay(screenX, screenY);
+//        Intersector.intersectRayPlane(pickRay, xyPlane, isoPoint);
+//        System.out.println("isoPoint:" + isoPoint);
+//
+//        Vector3 xyPoint = UncertaintyGame.isoToXY(isoPoint);
+//        System.out.println("xyPoint:" + xyPoint);
+//        selected = isoPoint;
+
+        /*
+         * TODO: select a tile
+         */
+
+        return false;
+    }
+
+    @Override
     public boolean scrolled(int amount) {
 
         int newDepth = UncertaintyGame.currentDepth + amount;
@@ -63,4 +96,13 @@ public class CameraController extends InputAdapter {
         return false;
 
     }
+
+    public Vector3 getSelected(){
+        return selected;
+    }
+
+    public Vector3 getCursorIntersectionIso(){return cursorIntersectionIso;}
+
+    public Vector3 getCursorIntersectionXY(){return cursorIntersectionXY;}
+
 }
