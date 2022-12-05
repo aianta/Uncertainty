@@ -93,7 +93,7 @@ public class IsometricRenderer {
     }
 
 
-    public void drawSelection(SpriteBatch batch, Vector3 selection, Vector3 offset){
+    public Vector3 drawSelection(SpriteBatch batch, Vector3 selection, Vector3 offset){
         Color color = getColorAtPixel((int)offset.x,(int)offset.y, isoHelper);
         //System.out.println("Color: (r:"+ color.r + " g:" + color.g + " b:" + color.b +")");
         Vector3 selectedXY = new Vector3(selection.x, selection.y, 0);
@@ -112,6 +112,7 @@ public class IsometricRenderer {
         float x = (vOrigin.x * TILE_WIDTH) +(selectedXY.x - selectedXY.y)*(TILE_WIDTH/2) ;
         float y = (vOrigin.y * TILE_HEIGHT)+(selectedXY.x + selectedXY.y)*(TILE_HEIGHT/2);
         batch.draw(selectedTile, x,y+16, 32, 16);
+        return selectedXY;
     }
 
     private Color getColorAtPixel(int x, int y, Texture texture){

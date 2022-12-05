@@ -145,6 +145,8 @@ public class UncertaintyGame extends ApplicationAdapter {
         Vector3 cell = new Vector3(((int)cursor.x/32), (int)cursor.y/16, 0);
         Vector3 offset = new Vector3((int)cursor.x % 32, (int)cursor.y % 16, 0);
         Vector3 origin = new Vector3(10,1,0);
+
+
         Vector3 grid = new Vector3((cell.y-origin.y)+ (cell.x-origin.x), (cell.y-origin.y)-(cell.x-origin.x),0);
 
 
@@ -157,16 +159,16 @@ public class UncertaintyGame extends ApplicationAdapter {
 //            renderer.drawLayer(batch, layerIndex);
 //            layerIndex++;
 //        }
-        renderer.drawSelection(batch, grid,offset);
+        Vector3 selectedXY = renderer.drawSelection(batch, grid,offset);
         batch.end();
 
 
 
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-//        shapeRenderer.rect(cell.x*32, cell.y*32, 32f,32f, Color.BLUE, Color.BLUE, Color.BLUE, Color.BLUE);
- //       shapeRenderer.rect(cell.x*32, cell.y*16, 32f, 16f,Color.PINK, Color.PINK, Color.PINK, Color.PINK);
-//        shapeRenderer.rect(cell.x, cell.y, 32f, 16f, Color.PINK, Color.PINK, Color.PINK, Color.PINK);
+        //shapeRenderer.rect(cell.x*32, cell.y*32, 32f,32f, Color.BLUE, Color.BLUE, Color.BLUE, Color.BLUE);
+        shapeRenderer.rect((cell.x)*32, cell.y*16, 32f, 16f,Color.PINK, Color.PINK, Color.PINK, Color.PINK);
+        //shapeRenderer.rect(cell.x, cell.y, 32f, 16f, Color.PINK, Color.PINK, Color.PINK, Color.PINK);
         shapeRenderer.end();
 
 
@@ -196,6 +198,7 @@ public class UncertaintyGame extends ApplicationAdapter {
         font.draw(textOverlay, "Cursor (x: " +cursor.x + " y: " + cursor.y + ")", 10, 140 );
         font.draw(textOverlay, "Grid (x: " + grid.x + " y " + grid.y + ")", 10, 160);
         font.draw(textOverlay, "Offset( x: " + offset.x + " y: " + offset.y + ")", 10, 200);
+        font.draw(textOverlay, "selectedXY (x: " + selectedXY.x + " y:" + selectedXY.y + ")", 10, 180);
 
         textOverlay.end();
 
