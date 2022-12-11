@@ -1,8 +1,10 @@
 package com.uncertainty;
 
+import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -14,10 +16,10 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
-import com.uncertainty.components.PositionComponent;
-import com.uncertainty.components.SizeComponent;
-import com.uncertainty.components.VelocityComponent;
+import com.uncertainty.components.*;
 import com.uncertainty.entities.systems.MovementSystem;
+import com.uncertainty.entities.systems.RenderingSystem;
+import com.uncertainty.entities.systems.SelectionSystem;
 import com.uncertainty.world.BlockType;
 import com.uncertainty.world.World;
 
@@ -38,10 +40,11 @@ public class UncertaintyGame extends ApplicationAdapter {
 
     private ShapeRenderer shapeRenderer;
     private IsometricRenderer renderer;
-    private MovementSystem movementSystem;
+    private RenderingSystem renderingSystem;
+    private SelectionSystem selectionSystem;
     private Engine engine;
 
-    private Entity player;
+    private Entity truck;
     private ComponentMapper<VelocityComponent> velocity = ComponentMapper.getFor(VelocityComponent.class);
     private ComponentMapper<PositionComponent> position = ComponentMapper.getFor(PositionComponent.class);
     private ComponentMapper<SizeComponent> size = ComponentMapper.getFor(SizeComponent.class);
@@ -49,6 +52,8 @@ public class UncertaintyGame extends ApplicationAdapter {
     private SpriteBatch batch;
     private SpriteBatch textOverlay;
     public static int currentDepth = World.DEPTH;
+
+    public static Vector3 selectedCoordinates = new Vector3(-1, -1, -1);
 
 
     World world;
@@ -72,12 +77,32 @@ public class UncertaintyGame extends ApplicationAdapter {
 
         //Generate world
         world = new World();
+
+        renderingSystem = new RenderingSystem(batch, renderer);
+        selectionSystem = new SelectionSystem();
+
+        //Init entity engine
+        engine = new Engine();
+
+        //Create the truck
+        truck = new Entity();
+        truck.add(new PositionComponent(new Vector3(0,0,0)));
+        truck.add(new VelocityComponent());
+        truck.add(new SelectableComponent());
+        truck.add(new TypeComponent("truck"));
+        truck.add(new SizeComponent(32,32));
+
+        ImmutableArray<Component> truckComponents = truck.getComponents();
+        engine.addEntity(truck);
+        engine.addSystem(renderingSystem);
+        engine.addSystem(selectionSystem);
     }
 
     @Override
     public void dispose() {
         engine.removeAllEntities();
-        engine.removeSystem(movementSystem);
+        engine.removeSystem(renderingSystem);
+        engine.removeSystem(selectionSystem);
     }
 
     public void render(){
@@ -109,7 +134,7 @@ public class UncertaintyGame extends ApplicationAdapter {
         shapeRenderer.end();
 
 
-        //TODO: Update entities
+
 
         //Process Controls
         if(Gdx.input.isKeyPressed(Input.Keys.W)) camera.translate(0,1,0);
@@ -117,6 +142,15 @@ public class UncertaintyGame extends ApplicationAdapter {
         if(Gdx.input.isKeyPressed(Input.Keys.S)) camera.translate(0,-1,0);
         if(Gdx.input.isKeyPressed(Input.Keys.D)) camera.translate(1,0,0);
 
+        //If we have a click, save our clicked grid tile.
+        if(Gdx.input.isTouched()){
+            selectedCoordinates = grid;
+        }
+
+        //TODO: Update entities
+        batch.begin();
+        engine.update(Gdx.graphics.getDeltaTime());
+        batch.end();
 
         //Render FPS and other info
         textOverlay.begin();

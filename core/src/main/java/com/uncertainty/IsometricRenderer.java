@@ -115,6 +115,21 @@ public class IsometricRenderer {
         return selectedXY;
     }
 
+    public void drawTruck(SpriteBatch batch, Texture texture, Vector3 pos, int width,  int height){
+        Vector3 toDraw = toIso(pos);
+        batch.draw(texture, toDraw.x, toDraw.y + height/2, width, height);
+
+    }
+
+    private Vector3 toIso(Vector3 input){
+        Vector3 result = new Vector3(
+                (vOrigin.x * TILE_WIDTH) + (input.x - input.y) * (TILE_WIDTH/2),
+                (vOrigin.y * TILE_HEIGHT) + (input.x + input.y) * (TILE_HEIGHT/2),
+                0
+        );
+        return result;
+    }
+
     private Color getColorAtPixel(int x, int y, Texture texture){
         if(!texture.getTextureData().isPrepared()){
             texture.getTextureData().prepare();
