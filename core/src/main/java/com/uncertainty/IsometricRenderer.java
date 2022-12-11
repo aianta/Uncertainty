@@ -31,7 +31,7 @@ public class IsometricRenderer {
     private int [] [] topLayer = new int[16][MAP_LENGTH+1];
 
 
-    Vector3 vOrigin = new Vector3(10,0,0);
+    Vector3 vOrigin = new Vector3(World.LENGTH ,0,0);
 
     public IsometricRenderer(){
         dirtBlock = new Texture(Gdx.files.internal("dirt-cube.png"));

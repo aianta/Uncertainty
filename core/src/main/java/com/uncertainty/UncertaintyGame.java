@@ -82,6 +82,7 @@ public class UncertaintyGame extends ApplicationAdapter {
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         //camera.setToOrtho(false, VIEWPORT_WIDTH,VIEWPORT_HEIGHT);
         //camera.position.set(VIEWPORT_WIDTH/2 , VIEWPORT_HEIGHT/2, 10);
+        camera.position.set(3500, 0, 10);
 
 
         batch = new SpriteBatch();
@@ -144,7 +145,7 @@ public class UncertaintyGame extends ApplicationAdapter {
 
         Vector3 cell = new Vector3(((int)cursor.x/32), (int)cursor.y/16, 0);
         Vector3 offset = new Vector3((int)cursor.x % 32, (int)cursor.y % 16, 0);
-        Vector3 origin = new Vector3(10,1,0);
+        Vector3 origin = new Vector3(World.LENGTH ,1,0);
 
 
         Vector3 grid = new Vector3((cell.y-origin.y)+ (cell.x-origin.x), (cell.y-origin.y)-(cell.x-origin.x),0);
@@ -158,7 +159,8 @@ public class UncertaintyGame extends ApplicationAdapter {
 //        while (layerIndex <= currentDepth){
 //            renderer.drawLayer(batch, layerIndex);
 //            layerIndex++;
-//        }
+//        }aaaaa
+
         Vector3 selectedXY = renderer.drawSelection(batch, grid,offset);
         batch.end();
 
