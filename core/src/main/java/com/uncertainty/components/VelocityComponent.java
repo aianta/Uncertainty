@@ -5,6 +5,6 @@ import com.uncertainty.UncertaintyGame;
 
 public class VelocityComponent implements Component {
 
-    public float x = 0.0f;
-    public float y = 0.0f;
+    public float x = 1.25f;
+    public float y = 1.25f;
 }

@@ -14,9 +14,11 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.uncertainty.components.*;
+import com.uncertainty.entities.systems.CommandSystem;
 import com.uncertainty.entities.systems.MovementSystem;
 import com.uncertainty.entities.systems.RenderingSystem;
 import com.uncertainty.entities.systems.SelectionSystem;
+import com.uncertainty.model.MoveCommand;
 import com.uncertainty.model.Orientation;
 import com.uncertainty.world.BlockType;
 import com.uncertainty.world.World;
@@ -40,6 +42,8 @@ public class UncertaintyGame extends ApplicationAdapter {
     private IsometricRenderer renderer;
     private RenderingSystem renderingSystem;
     private SelectionSystem selectionSystem;
+    private MovementSystem movementSystem;
+    private CommandSystem commandSystem;
     private Engine engine;
 
     private Entity truck;
@@ -78,6 +82,8 @@ public class UncertaintyGame extends ApplicationAdapter {
 
         renderingSystem = new RenderingSystem(batch, renderer);
         selectionSystem = new SelectionSystem();
+        commandSystem = new CommandSystem();
+        movementSystem = new MovementSystem();
 
         //Init entity engine
         engine = new Engine();
@@ -90,11 +96,14 @@ public class UncertaintyGame extends ApplicationAdapter {
         truck.add(new OrientationComponent(Orientation.UP_RIGHT));
         truck.add(new TypeComponent("truck"));
         truck.add(new SizeComponent(32,32));
+        truck.add(new OrdersComponent());
 
         ImmutableArray<Component> truckComponents = truck.getComponents();
         engine.addEntity(truck);
         engine.addSystem(renderingSystem);
         engine.addSystem(selectionSystem);
+        engine.addSystem(commandSystem);
+        engine.addSystem(movementSystem);
     }
 
     @Override
@@ -142,12 +151,18 @@ public class UncertaintyGame extends ApplicationAdapter {
         if(Gdx.input.isKeyPressed(Input.Keys.D)) camera.translate(1,0,0);
 
         //If we have a click, save our clicked grid tile.
-        if(Gdx.input.justTouched() && world.isValidWorldCoordinate(grid)){
+        if(Gdx.input.justTouched() && world.isValidWorldCoordinate(grid) && engine.getEntitiesFor(Family.all(SelectedComponent.class).get()).size() == 0){
             System.out.println("Creating select entity for (" + grid.x + "," + grid.y + ")");
             Entity selectEntity = new Entity();
             selectEntity.add(new SelectComponent());
             selectEntity.add(new PositionComponent(new Vector3(grid)));
             engine.addEntity(selectEntity);
+        }
+
+        if(Gdx.input.justTouched() && world.isValidWorldCoordinate(grid) && engine.getEntitiesFor(Family.all(SelectedComponent.class).get()).size() > 0){
+            Entity moveCommand = new Entity();
+            moveCommand.add(new CommandComponent(new MoveCommand(grid)));
+            engine.addEntity(moveCommand);
         }
 
         //TODO: Update entities

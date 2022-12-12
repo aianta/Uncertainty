@@ -1,8 +1,13 @@
 package com.uncertainty.model;
 
+import com.badlogic.gdx.math.Vector3;
+
 public class MoveCommand extends UnitCommand{
 
-    public int targetX = -1;
-    public int targetY = -1;
+    public Vector3 targetPosition;
+
+    public MoveCommand(Vector3 position){
+        this.targetPosition = position;
+    }
 
 }
