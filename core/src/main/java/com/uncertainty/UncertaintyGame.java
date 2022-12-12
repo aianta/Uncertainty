@@ -17,6 +17,7 @@ import com.uncertainty.components.*;
 import com.uncertainty.entities.systems.MovementSystem;
 import com.uncertainty.entities.systems.RenderingSystem;
 import com.uncertainty.entities.systems.SelectionSystem;
+import com.uncertainty.model.Orientation;
 import com.uncertainty.world.BlockType;
 import com.uncertainty.world.World;
 
@@ -86,6 +87,7 @@ public class UncertaintyGame extends ApplicationAdapter {
         truck.add(new PositionComponent(new Vector3(0,0,0)));
         truck.add(new VelocityComponent());
         truck.add(new SelectableComponent());
+        truck.add(new OrientationComponent(Orientation.UP_RIGHT));
         truck.add(new TypeComponent("truck"));
         truck.add(new SizeComponent(32,32));
 
