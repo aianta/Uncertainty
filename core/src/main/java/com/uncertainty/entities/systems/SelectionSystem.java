@@ -2,43 +2,67 @@ package com.uncertainty.entities.systems;
 
 import com.badlogic.ashley.core.*;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.uncertainty.UncertaintyGame;
-import com.uncertainty.components.PositionComponent;
-import com.uncertainty.components.SelectableComponent;
-import com.uncertainty.components.TypeComponent;
-import com.uncertainty.components.VelocityComponent;
+import com.uncertainty.components.*;
 
-public class SelectionSystem extends IteratingSystem {
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+public class SelectionSystem extends IteratingSystem{
 
     private ComponentMapper<PositionComponent> pm = ComponentMapper.getFor(PositionComponent.class);
     private ComponentMapper<VelocityComponent> vm = ComponentMapper.getFor(VelocityComponent.class);
     private ComponentMapper<SelectableComponent> sm = ComponentMapper.getFor(SelectableComponent.class);
     private ComponentMapper<TypeComponent> tm = ComponentMapper.getFor(TypeComponent.class);
+    private ComponentMapper<SelectComponent> selectMapper = ComponentMapper.getFor(SelectComponent.class);
 
     public SelectionSystem() {
-        super(Family.all(
+        super(Family.all(SelectComponent.class).get());
+    }
+
+
+
+
+    @Override
+    protected void processEntity(Entity selectEntity, float deltaTime) {
+        //Get all selectable entities
+        ImmutableArray<Entity> selectableEntities = getEngine().getEntitiesFor(Family.all(
                 PositionComponent.class,
                 VelocityComponent.class,
                 SelectableComponent.class,
                 TypeComponent.class
         ).get());
-    }
 
+        /**
+         * For this select entity, go through all selectable entities
+         * and see if it selects one. If it doesn't, remove it.
+         */
+        for (Entity selectable: selectableEntities){
+            PositionComponent positionComponent = pm.get(selectable);
+            SelectableComponent selectableComponent = sm.get(selectable);
+            if(positionComponent.position.equals(pm.get(selectEntity).position)){
+                TypeComponent typeComponent = tm.get(selectable);
+                selectableComponent.isSelected = true;
+                selectable.add(new SelectedComponent());
+                System.out.println("Selected " + typeComponent.type + "@(" + positionComponent.position.x + "," + positionComponent.position.y + ")");
 
-
-    @Override
-    protected void processEntity(Entity entity, float deltaTime) {
-
-        PositionComponent positionComponent = pm.get(entity);
-        SelectableComponent selectableComponent = sm.get(entity);
-
-        if(positionComponent.position.equals(UncertaintyGame.selectedCoordinates)){
-            TypeComponent typeComponent = tm.get(entity);
-            selectableComponent.isSelected = true;
-            System.out.println("Selected " + typeComponent.type + "@(" + positionComponent.position.x + "," + positionComponent.position.y + ")");
+                getEngine().removeEntity(selectEntity);
+                return;
+            }
         }
 
+        //If we get here the select entity couldn't select any selectable entity.
+        getEngine().removeEntity(selectEntity);
+
+        //De-select any previously selected entities
+        ImmutableArray<Entity> selectedEntities = getEngine().getEntitiesFor(Family.all(SelectedComponent.class).get());
+        for (Entity selected: selectedEntities){
+            selected.remove(SelectedComponent.class);
+        }
     }
+
 
 
 }

@@ -1,5 +1,7 @@
 package com.uncertainty.world;
 
+import com.badlogic.gdx.math.Vector3;
+
 import java.util.Random;
 
 public class World {
@@ -40,6 +42,16 @@ public class World {
         return space[depth][row][col];
     }
 
-
+    /**
+     * Returns true if coordinate is inside the world grid dimensions.
+     * @param coordinate coordinate to test
+     * @return true if valid
+     */
+    public boolean isValidWorldCoordinate(Vector3 coordinate){
+        return (
+            coordinate.x >= 0 && coordinate.x < WIDTH &&
+            coordinate.y >= 0 && coordinate.y < LENGTH
+        )?true:false;
+    }
 
 }

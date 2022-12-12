@@ -1,9 +1,6 @@
 package com.uncertainty;
 
-import com.badlogic.ashley.core.Component;
-import com.badlogic.ashley.core.ComponentMapper;
-import com.badlogic.ashley.core.Engine;
-import com.badlogic.ashley.core.Entity;
+import com.badlogic.ashley.core.*;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Color;
@@ -143,8 +140,12 @@ public class UncertaintyGame extends ApplicationAdapter {
         if(Gdx.input.isKeyPressed(Input.Keys.D)) camera.translate(1,0,0);
 
         //If we have a click, save our clicked grid tile.
-        if(Gdx.input.isTouched()){
-            selectedCoordinates = grid;
+        if(Gdx.input.justTouched() && world.isValidWorldCoordinate(grid)){
+            System.out.println("Creating select entity for (" + grid.x + "," + grid.y + ")");
+            Entity selectEntity = new Entity();
+            selectEntity.add(new SelectComponent());
+            selectEntity.add(new PositionComponent(new Vector3(grid)));
+            engine.addEntity(selectEntity);
         }
 
         //TODO: Update entities
@@ -157,7 +158,10 @@ public class UncertaintyGame extends ApplicationAdapter {
         font.draw(textOverlay, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10,20);
         font.draw(textOverlay, "Depth: " + UncertaintyGame.currentDepth, 10, 40);
         font.draw(textOverlay, "Viewport (height: " + camera.viewportHeight + ", width: " + camera.viewportWidth + ")", 10, 60);
+        font.draw(textOverlay, "Selected Entities: " + engine.getEntitiesFor(Family.all(SelectedComponent.class).get()).size(), 10, 100);
+        font.draw(textOverlay, "Entities: " + engine.getEntities().size(), 10, 120 );
         font.draw(textOverlay, "Cursor (x: " +cursor.x + " y: " + cursor.y + ")", 10, 140 );
+
         font.draw(textOverlay, "Grid (x: " + grid.x + " y " + grid.y + ")", 10, 160);
         font.draw(textOverlay, "Offset( x: " + offset.x + " y: " + offset.y + ")", 10, 200);
         font.draw(textOverlay, "selectedXY (x: " + selectedXY.x + " y:" + selectedXY.y + ")", 10, 180);
