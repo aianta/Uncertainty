@@ -90,7 +90,7 @@ public class UncertaintyGame extends ApplicationAdapter {
 
         //Create the truck
         truck = new Entity();
-        truck.add(new PositionComponent(new Vector3(0,0,0)));
+        truck.add(new PositionComponent(new Vector3(0,0,1)));
         truck.add(new VelocityComponent());
         truck.add(new SelectableComponent());
         truck.add(new OrientationComponent(Orientation.UP_RIGHT));
@@ -130,8 +130,9 @@ public class UncertaintyGame extends ApplicationAdapter {
 
         batch.begin();
 
-        renderer.drawWorld(batch, world, currentDepth);
+        renderer.drawWorld(batch, world, currentDepth, Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT));
         Vector3 selectedXY = renderer.drawSelection(batch, grid,offset);
+        Vector3 worldSelect3d = renderer.getSelectedWorldPosition(grid, offset, currentDepth);
         batch.end();
 
         shapeRenderer.setProjectionMatrix(camera.combined);
@@ -152,16 +153,18 @@ public class UncertaintyGame extends ApplicationAdapter {
 
         //If we have a click, save our clicked grid tile.
         if(Gdx.input.justTouched() && world.isValidWorldCoordinate(grid) && engine.getEntitiesFor(Family.all(SelectedComponent.class).get()).size() == 0){
-            System.out.println("Creating select entity for (" + grid.x + "," + grid.y + ")");
+            System.out.println("Creating select entity for (" + worldSelect3d.x + "," + worldSelect3d.y + ","+worldSelect3d.z+")");
             Entity selectEntity = new Entity();
             selectEntity.add(new SelectComponent());
-            selectEntity.add(new PositionComponent(new Vector3(grid)));
+            Vector3 selectedPosition = new Vector3(worldSelect3d);
+            selectedPosition.z = UncertaintyGame.currentDepth;
+            selectEntity.add(new PositionComponent(selectedPosition));
             engine.addEntity(selectEntity);
         }
 
         if(Gdx.input.justTouched() && world.isValidWorldCoordinate(grid) && engine.getEntitiesFor(Family.all(SelectedComponent.class).get()).size() > 0){
             Entity moveCommand = new Entity();
-            moveCommand.add(new CommandComponent(new MoveCommand(grid)));
+            moveCommand.add(new CommandComponent(new MoveCommand(worldSelect3d)));
             engine.addEntity(moveCommand);
         }
 
@@ -170,12 +173,15 @@ public class UncertaintyGame extends ApplicationAdapter {
         engine.update(Gdx.graphics.getDeltaTime());
         batch.end();
 
+
+
         //Render FPS and other info
         textOverlay.begin();
         font.draw(textOverlay, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10,20);
         font.draw(textOverlay, "Depth: " + UncertaintyGame.currentDepth, 10, 40);
         font.draw(textOverlay, "Viewport (height: " + camera.viewportHeight + ", width: " + camera.viewportWidth + ")", 10, 60);
         font.draw(textOverlay, "Selected Entities: " + engine.getEntitiesFor(Family.all(SelectedComponent.class).get()).size(), 10, 100);
+        font.draw(textOverlay, "3D world position (x: " + worldSelect3d.x + ", y: " + worldSelect3d.y + ", z: " + worldSelect3d.z + ")", 10, 80 );
         font.draw(textOverlay, "Entities: " + engine.getEntities().size(), 10, 120 );
         font.draw(textOverlay, "Cursor (x: " +cursor.x + " y: " + cursor.y + ")", 10, 140 );
 

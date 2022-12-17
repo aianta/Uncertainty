@@ -42,11 +42,13 @@ public class SelectionSystem extends IteratingSystem{
         for (Entity selectable: selectableEntities){
             PositionComponent positionComponent = pm.get(selectable);
             SelectableComponent selectableComponent = sm.get(selectable);
-            if(positionComponent.position.equals(pm.get(selectEntity).position)){
+            System.out.println("Selectable position:" + positionComponent.position + " select position: "+ pm.get(selectEntity).position + " " + positionComponent.position.epsilonEquals(pm.get(selectEntity).position));
+            if(positionComponent.position.epsilonEquals(pm.get(selectEntity).position)){
                 TypeComponent typeComponent = tm.get(selectable);
                 selectableComponent.isSelected = true;
                 selectable.add(new SelectedComponent());
-                System.out.println("Selected " + typeComponent.type + "@(" + positionComponent.position.x + "," + positionComponent.position.y + ")");
+                System.out.println("Selected " + typeComponent.type + "@(" + positionComponent.position.x + "," + positionComponent.position.y + "," +positionComponent.position.z+ ")");
+
 
                 getEngine().removeEntity(selectEntity);
                 return;

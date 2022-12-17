@@ -6,7 +6,7 @@ import java.util.Random;
 
 public class World {
 
-    public static final int DEPTH = 1;
+    public static final int DEPTH = 5;
     public static final int WIDTH = 16;
     public static final int LENGTH = 100;
 

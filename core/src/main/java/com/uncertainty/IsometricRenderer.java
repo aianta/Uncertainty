@@ -11,6 +11,10 @@ import com.uncertainty.world.World;
 
 import java.util.Random;
 
+/**
+ * The isometric renderer encapsulates all logic related to rendering the world into the isometric perspective on the
+ * screen.
+ */
 public class IsometricRenderer {
 
     public static final int TEXTURE_WIDTH = 32;
@@ -54,7 +58,7 @@ public class IsometricRenderer {
         return gridSelection;
     }
 
-    public void drawWorld(SpriteBatch batch, World w, int currDepth){
+    public void drawWorld(SpriteBatch batch, World w, int currDepth, boolean onlyDepth){
 
 
         //Prevent invalid depths
@@ -80,7 +84,9 @@ public class IsometricRenderer {
                     float x = (vOrigin.x * TILE_WIDTH) +(iso.x - iso.y)*(TILE_WIDTH/2) ;
                     float y = (vOrigin.y * TILE_HEIGHT)+(iso.x + iso.y)*(TILE_HEIGHT/2) + (TILE_HEIGHT*depth);
 
-
+                    if(onlyDepth && depth != currDepth){
+                        break;
+                    }
 
                     switch (blockType){
                         case EMPTY: break;
@@ -92,6 +98,30 @@ public class IsometricRenderer {
         }
     }
 
+
+    public Vector3 getSelectedWorldPosition(Vector3 selection, Vector3 offset, int currentDepth){
+        Color color = getColorAtPixel((int)offset.x,(int)offset.y, isoHelper);
+        //System.out.println("Color: (r:"+ color.r + " g:" + color.g + " b:" + color.b +")");
+        Vector3 selectedXY = new Vector3(selection.x, selection.y, 0);
+        if(color.equals(Color.RED)){
+            selectedXY.add(new Vector3(-1,0,0));
+        }
+        if(color.equals(Color.GREEN)){
+            selectedXY.add(new Vector3(0,1,0));
+        }
+        if(color.equals(Color.BLUE)){
+            selectedXY.add(new Vector3(1,0,0));
+        }
+        if(color.equals(Color.YELLOW)){
+            selectedXY.add(new Vector3(0,-1,0));
+        }
+        /* Subtract the depth from the x and y components to get the 'real' tile
+         * being clicked in the world model. Add current depth as the z component.
+         */
+        selectedXY.sub(currentDepth, currentDepth, -currentDepth);
+
+        return selectedXY;
+    }
 
     public Vector3 drawSelection(SpriteBatch batch, Vector3 selection, Vector3 offset){
         Color color = getColorAtPixel((int)offset.x,(int)offset.y, isoHelper);
@@ -124,7 +154,7 @@ public class IsometricRenderer {
     private Vector3 toIso(Vector3 input){
         Vector3 result = new Vector3(
                 (vOrigin.x * TILE_WIDTH) + (input.x - input.y) * (TILE_WIDTH/2),
-                (vOrigin.y * TILE_HEIGHT) + (input.x + input.y) * (TILE_HEIGHT/2),
+                (vOrigin.y * TILE_HEIGHT) + (input.x + input.y) * (TILE_HEIGHT/2) + (TILE_HEIGHT*input.z),
                 0
         );
         return result;
